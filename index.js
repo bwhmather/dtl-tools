@@ -1,59 +1,46 @@
-class DTLManifest {
-    constructor(data) {
-        this.source = data.source;
-
-        this.snapshots = [];
-        for (let snapshotData of data.snapshots) {
-            this.snapshots.push(new DTLSnapshot(snapshotData));
-        }
-
-        this.mappings = [];
-        for (let mappingData of data.mappings) {
-            this.mappings.push(new DTLMapping(mappingData));
-        }
+export class DTLColumn {
+    constructor({name, array}) {
+        this.name = name;
+        this.array = array;
     }
 
+    static fromJson(data) {
+        return new DTLColumn({name: data.name, array: data.array});
+    }
 }
 
+export class DTLSnapshot {
+    constructor({start, end, columns}) {
+        this.start = start;
+        this.end = end;
 
-
-
-
-
-
-
-
-
-
-
-class DTLManifest {
-    /**
-     * @private
-     */
-    constructor(manifestUrl, arrayUrl) {
-        this.#manifestUrl = manifestUrl;
-        this.#arrayUrl = arrayUrl;
-
-        this.#source = null;
-        this.#snapshots = null;
-        this.#mappings = null;
-
-        // The offset in the source code of the beginning of each row.
-        this.#rowToOffsetMap = null;
-
-        // The most relevant snapshot for each source offset.
-        this.#offsetToSnapshotMap = null;
+        this.#columns = columns;
     }
 
-    /**
-     * @private
-     */
-    initialise() {
-        data = await fetch(this.#manifestUrl);
+    static fromJson(data) {
+        const start = DTLLocation.fromJson(data.start);
+        const end = DTLLocation.fromJson(data.end);
 
-        this.#source = data.source.replace(/\r\n|\r/g, '\n');
-        this.#snapshots = data.snapshots;
-        this.#mappings = data.mappings;
+        const columns = [];
+        for (const columnData of data.columns) {
+            columns.push(DTLColumn.fromJson(columnData));
+        }
+
+        return new DTLSnapshot({start, end, columns});
+    }
+
+    *columns() {
+        for (const column of this.#columns) {
+            yield column;
+        }
+    }
+}
+
+export class DTLManifest {
+    constructor({source, snapshots, mappings}) {
+        this.#source = source;
+        this.#snapshots = snapshots;
+        this.#mappings = mappings;
 
         // === Build a map from row number to source offset ===
         this.#rowToOffsetMap = [0];
@@ -89,19 +76,87 @@ class DTLManifest {
                 this.#offsetToSnapshotMap[offset] = index;
             }
         }
+    }
+
+    static fromJson(data) {
+        source = data.source.replace(/\r\n|\r/g, '\n');
+
+        snapshots = [];
+        for (let snapshotData of data.snapshots) {
+            this.snapshots.push(new DTLSnapshot(snapshotData));
+        }
+
+        mappings = [];
+        for (let mappingData of data.mappings) {
+            this.mappings.push(new DTLMapping(mappingData));
+        }
+
+        return new DTLManifest({source, snapshots, mappings});
+    }
+
+    static get source() {
+        return this.#source;
+    }
+
+    *snapshots() {
+        for (const snapshot of this.#snapshots) {
+            yield snapshot;
+        }
+    }
+
+    snapshotById(snapshotId) {
+        return this.#snapshots[snapshotId];
+    }
+
+    snapshotByRowColumn(row, col) {
+        const offset = this.#rowToOffsetMap[row] + col;
+        const snapshotId = this.#offsetToSnapshotMap[offset];
+        return this.#snapshots[snapshotId];
+    }
+
+    *mappings() {
+        for (const mapping of this.#mappings) {
+            yield mapping;
+        }
+    }
+}
+
+export function fetchManifest(url) {
+    data = await fetch(url);
+    manifest = DTLManifest.fromJson(data);
+    await manifest.initialise();
+    return manifest;
+}
+
+class DTLSession {
+    /**
+     * @private
+     */
+    constructor(manifestUrl, arrayUrl) {
+        this.#manifestUrl = manifestUrl;
+        this.#arrayUrl = arrayUrl;
+
+        this.#manifest = null;
+    }
+
+    /**
+     * @private
+     */
+    initialise() {
+        this.#manifest = fetchManifest(this.#manifestUrl);
 
         // === Register all referenced arrays with DuckDB ===
         let arrays = new Map();
 
         // Find arrays referenced by snapshots.
-        for (let snapshot of this.#snapshots) {
+        for (let snapshot of this.#manifest.snapshots()) {
             for (column of snapshot.columns) {
                 arrays.set(column.array);
             }
         }
 
         // Find arrays referenced by mappings.
-        for (let mapping of this.#mappings) {
+        for (let mapping of this.#manifest.mappings()) {
             arrays.add(mapping.srcArray);
             arrays.add(mapping.tgtArray);
             arrays.add(mapping.srcIndexArray);
@@ -113,16 +168,6 @@ class DTLManifest {
                 `${array}.parquet`, `${this.#arrayUrl}/${array}.parquet`
             );
         }
-    }
-
-    static get source() {
-        return this.#source;
-    }
-
-    sourcePositionToSnapshotId({row, col}) {
-        // TODO bounds checking.
-        let offset = this.#rowToOffsetMap[row] + col;
-        return this.#offsetToSnapshotMap[offset];
     }
 
     /**
@@ -208,11 +253,6 @@ class DTLManifest {
     }
 }
 
-function fetchManifest(url) {
-    manifest = new DTLManifest(url);
-    await manifest.initialise();
-    return manifest;
-}
 
 class DTLViewer extends HTMLElement {
     constructor() {
