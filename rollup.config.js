@@ -1,12 +1,13 @@
 import { terser } from 'rollup-plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
-
+import url from '@rollup/plugin-url';
 
 export default [
   {
     input: 'src/index.js',
     plugins: [
         resolve(),
+        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
     ],
     output: {
       format: 'es',
@@ -19,6 +20,7 @@ export default [
     input: 'src/index.js',
     plugins: [
         resolve(),
+        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
     ],
     output: {
       format: 'cjs',
@@ -31,6 +33,7 @@ export default [
     input: 'src/index.js',
     plugins: [
         resolve(),
+        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
     ],
     output: {
       format: 'iife',
@@ -43,8 +46,9 @@ export default [
   {
     input: 'src/index.js',
     plugins: [
-      resolve(),
-      terser(),
+        resolve(),
+        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
+        terser(),
     ],
     output: {
       format: 'iife',

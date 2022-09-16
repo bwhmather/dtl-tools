@@ -1,4 +1,6 @@
 import { h, clobber } from "bdc";
+import mainModuleUrl from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm";
+import mainWorkerUrl from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js";
 
 class DTLSession {
   #manifestUrl;
@@ -38,6 +40,12 @@ class DTLSession {
       arrays.add(mapping.srcIndexArray);
       arrays.add(mapping.tgtIndexArray);
     }
+
+    // Initialise database.
+    const worker = new duckdb.Worker(mainWorkerUrl);
+    const logger = new duckdb.ConsoleLogger();
+    const db = new duckdb.AsyncDuckDB(logger, worker);
+    await db.instantiate(mainModuleUrl);
 
     for (let array of arrays) {
       await db.registerFileURL(
