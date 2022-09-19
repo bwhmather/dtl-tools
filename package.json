@@ -29,6 +29,7 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "dependencies": {
-    "@duckdb/duckdb-wasm": "^1.16.1"
+    "@duckdb/duckdb-wasm": "^1.16.1",
+    "rxjs": "^7.5.6"
   }
 }
