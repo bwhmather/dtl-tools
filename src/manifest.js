@@ -5,7 +5,7 @@ export class DTLColumn {
   }
 
   static fromJson(data) {
-    return new DTLColumn({ name: data.name, array: data.array });
+    return new DTLColumn({ name: data["name"], array: data["array"] });
   }
 }
 
@@ -77,9 +77,16 @@ export class DTLManifest {
     });
 
     for (let index of indexes) {
-      let snapshot = this.#snapshots[index];
+      const snapshot = this.#snapshots[index];
 
-      let startOffset = this.rowColToOffset();
+      const startOffset = this.rowColToOffset(
+        snapshot.start.lineno,
+        snapshot.end.column
+      );
+      const endOffset = this.rowColToOffset(
+        snapshot.end.lineno,
+        snapshot.end.column
+      );
 
       for (let offset = startOffset; offset < endOffset; offset++) {
         this.#offsetToSnapshotMap[offset] = index;
@@ -88,16 +95,16 @@ export class DTLManifest {
   }
 
   static fromJson(data) {
-    source = data.source.replace(/\r\n|\r/g, "\n");
+    const source = data["source"].replace(/\r\n|\r/g, "\n");
 
-    snapshots = [];
-    for (let snapshotData of data.snapshots) {
-      this.snapshots.push(new DTLSnapshot(snapshotData));
+    const snapshots = [];
+    for (let snapshotData of data["snapshots"]) {
+      snapshots.push(new DTLSnapshot(snapshotData));
     }
 
-    mappings = [];
-    for (let mappingData of data.mappings) {
-      this.mappings.push(new DTLMapping(mappingData));
+    const mappings = [];
+    for (let mappingData of data["mappings"]) {
+      mappings.push(new DTLMapping(mappingData));
     }
 
     return new DTLManifest({ source, snapshots, mappings });
@@ -111,6 +118,10 @@ export class DTLManifest {
     for (const snapshot of this.#snapshots) {
       yield snapshot;
     }
+  }
+
+  rowColToOffset(row, col) {
+    return this.#rowToOffsetMap[row] + col;
   }
 
   snapshotById(snapshotId) {
@@ -131,8 +142,8 @@ export class DTLManifest {
 }
 
 export async function fetchManifest(url) {
-  data = await fetch(url);
-  manifest = DTLManifest.fromJson(data);
-  await manifest.initialise();
+  const response = await fetch(url);
+  const data = await response.json();
+  const manifest = DTLManifest.fromJson(data);
   return manifest;
 }

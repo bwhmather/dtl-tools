@@ -1,11 +1,16 @@
 import { h, clobber } from "bdc";
 import mainModuleUrl from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm";
 import mainWorkerUrl from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js";
+import * as duckdb from "@duckdb/duckdb-wasm";
+
+import { fetchManifest } from "./manifest.js";
 
 class DTLSession {
   #manifestUrl;
   #arrayUrl;
+
   #manifest;
+  #db;
 
   /**
    * @private
@@ -15,21 +20,28 @@ class DTLSession {
     this.#arrayUrl = arrayUrl;
 
     this.#manifest = null;
+    this.#db = null;
   }
 
   /**
    * @private
    */
   async initialise() {
-    this.#manifest = fetchManifest(this.#manifestUrl);
+    this.#manifest = await fetchManifest(this.#manifestUrl);
+
+    // === Initialise DuckDB ===
+    const worker = new Worker(mainWorkerUrl);
+    const logger = new duckdb.ConsoleLogger();
+    this.#db = new duckdb.AsyncDuckDB(logger, worker);
+    await this.#db.instantiate(mainModuleUrl);
 
     // === Register all referenced arrays with DuckDB ===
-    let arrays = new Map();
+    let arrays = new Set();
 
     // Find arrays referenced by snapshots.
     for (let snapshot of this.#manifest.snapshots()) {
-      for (column of snapshot.columns) {
-        arrays.set(column.array);
+      for (let column of snapshot.columns()) {
+        arrays.add(column.array);
       }
     }
 
@@ -40,18 +52,13 @@ class DTLSession {
       arrays.add(mapping.srcIndexArray);
       arrays.add(mapping.tgtIndexArray);
     }
-
-    // Initialise database.
-    const worker = new duckdb.Worker(mainWorkerUrl);
-    const logger = new duckdb.ConsoleLogger();
-    const db = new duckdb.AsyncDuckDB(logger, worker);
-    await db.instantiate(mainModuleUrl);
-
-    for (let array of arrays) {
-      await db.registerFileURL(
-        `${array}.parquet`,
-        `${this.#arrayUrl}/${array}.parquet`
-      );
+    let array;
+    for (array of arrays) {
+      const url = new URL(
+        `${this.#arrayUrl}/${array}.parquet`,
+        document.location
+      ).href;
+      await this.#db.registerFileURL(`${array}.parquet`, url);
     }
   }
 
@@ -75,7 +82,12 @@ class DTLSession {
     }
 
     // Execute the query.
-    return await conn.query(query);
+    const conn = await this.#db.connect();
+    try {
+      return await conn.query(query);
+    } finally {
+      await con.close();
+    }
   }
 
   async readSnapshotLength(id) {
@@ -87,7 +99,12 @@ class DTLSession {
     query += `    '${column.array}.parquet'\n`;
 
     // Execute the query.
-    return await conn.query(query);
+    const conn = await this.#db.connect();
+    try {
+      return await conn.query(query);
+    } finally {
+      await con.close();
+    }
   }
 
   /**
@@ -134,7 +151,12 @@ class DTLSession {
     }
 
     // Execute the query.
-    return await conn.query(query);
+    const conn = await this.#db.connect();
+    try {
+      return await conn.query(query);
+    } finally {
+      await con.close();
+    }
   }
 }
 
@@ -162,15 +184,35 @@ export class DTLViewer extends HTMLElement {
     // Render table contents.
   }
 
+  get manifest() {
+    return this.getAttribute("manifest");
+  }
+  set manifest(value) {
+    this.setAttribute("manifest", value);
+  }
+
+  get store() {
+    return this.getAttribute("store");
+  }
+  set store(value) {
+    this.setAttribute("store", value);
+  }
+
   static get observedAttributes() {
     return ["manifest", "store", "source", "target"];
   }
 
-  setManifest(newValue) {}
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name == "manifest" || name == "store") {
+      if (this.manifest && this.store) {
+        this.session = new DTLSession("./manifest.json", "./data");
+        this.session.initialise();
+        this.render();
+      }
+    }
+  }
 
-  setTarget(newValue) {}
-
-  attributeChangedCallback(name, oldValue, newValue) {}
+  connectedCallback() {}
 
   disconnectedCallback() {
     // TODO decrement ref count on manifest
