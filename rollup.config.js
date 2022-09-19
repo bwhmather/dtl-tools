@@ -2,12 +2,17 @@ import { terser } from 'rollup-plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
 import url from '@rollup/plugin-url';
 
+const indirect = [
+    "**/@duckdb/duckdb-wasm/dist/duckdb-eh.wasm",
+    "**/@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js",
+];
+
 export default [
   {
     input: 'src/index.js',
     plugins: [
         resolve(),
-        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
+        url({include: indirect, limit: Infinity}),
     ],
     output: {
       format: 'es',
@@ -20,7 +25,7 @@ export default [
     input: 'src/index.js',
     plugins: [
         resolve(),
-        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
+        url({include: indirect, limit: Infinity}),
     ],
     output: {
       format: 'cjs',
@@ -33,7 +38,7 @@ export default [
     input: 'src/index.js',
     plugins: [
         resolve(),
-        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
+        url({include: indirect, limit: Infinity}),
     ],
     output: {
       format: 'iife',
@@ -47,7 +52,7 @@ export default [
     input: 'src/index.js',
     plugins: [
         resolve(),
-        url({include: ['**/@duckdb/duckdb-wasm/dist/**/*'], limit: Infinity}),
+        url({include: indirect, limit: Infinity}),
         terser(),
     ],
     output: {
@@ -58,6 +63,4 @@ export default [
       sourcemapFile: 'dist/dtl.min.js.map'
     }
   },
-]
-
-
+];
