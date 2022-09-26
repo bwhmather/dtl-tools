@@ -14,6 +14,12 @@ import * as duckdb from "@duckdb/duckdb-wasm";
 
 import { fetchManifest } from "./manifest.js";
 
+const STYLE = `
+#root {
+    all: initial;
+}
+`;
+
 class DTLSession {
   #manifestUrl;
   #arrayUrl;
@@ -319,8 +325,10 @@ export class DTLViewer extends HTMLElement {
 
       clobber(
         this.shadowRoot,
+        h("style", STYLE),
         h(
           "table",
+          { id: "root" },
           h("thead", h("tr", headerElements)),
           h("tbody", rowElements)
         )
