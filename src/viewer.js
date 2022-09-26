@@ -307,7 +307,6 @@ export class DTLViewer extends HTMLElement {
       for (const column of headers) {
         headerElements.push(h("th", column.column_name));
       }
-      rowElements.push(h("tr", headerElements));
 
       for (const row of data) {
         rowElements.push(
@@ -318,7 +317,14 @@ export class DTLViewer extends HTMLElement {
         );
       }
 
-      clobber(this.shadowRoot, h("table", rowElements));
+      clobber(
+        this.shadowRoot,
+        h(
+          "table",
+          h("thead", h("tr", headerElements)),
+          h("tbody", rowElements)
+        )
+      );
     });
   }
 
