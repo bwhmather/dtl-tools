@@ -144,24 +144,28 @@ class DTLSession {
     }
 
     // Add source clauses.
-    query += "FROM\n";
+    query += `FROM (\n`;
+    query += `    SELECT\n`;
+    query += `        row_number() OVER () AS rownum,\n`;
+    query += `        values\n`;
+    query += `    FROM parquet_scan(\n`;
+    query += `        '${columns[0].array}.parquet'\n`;
+    query += `    )\n`;
+    query += `) AS ${columns[0].name}\n`;
 
-    for (const column of columns) {
-      query += `    '${column.array}.parquet' ${column.name},\n`;
+    // Add join clauses.
+    for (const column of columns.slice(1)) {
+      query += "JOIN (\n";
+      query += `    SELECT\n`;
+      query += `        row_number() OVER () AS rownum,\n`;
+      query += `        values\n`;
+      query += `    FROM parquet_scan(\n`;
+      query += `        '${column.array}.parquet'\n`;
+      query += `    )\n`;
+      query += `) AS ${column.name}\n`;
+      query += `    USING (rownum)\n`;
     }
 
-    // Add filter clauses.
-    /*    if (columns.length > 1) {
-      query += "WHERE\n";
-
-      const clauses = []
-      for (const column of columns.slice(1)) {
-        clauses.push(`    ${column.name}.rowid = ${columns[0].name}.rowid`);
-      }
-      query += clauses.join(' AND\n');
-      query += '\n';
-    }
-*/
     // Add order by clause.
     //  query += "ORDER BY\n";
     //query += `    ${columns[0].name}.rowid\n`;
