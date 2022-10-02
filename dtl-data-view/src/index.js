@@ -253,6 +253,8 @@ export class DTLViewer extends HTMLElement {
       )
       .subscribe(headers);
 
+    headers.subscribe((table) => table && console.table(table.toArray()));
+
     // Session + Target => Length
     const length = new BehaviorSubject();
 

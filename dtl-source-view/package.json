@@ -1,0 +1,42 @@
+{
+  "name": "@dtl-tools/dtl-source-view",
+  "version": "0.0.1",
+  "description": "Custom element for displaying the source code for a DTL run",
+  "main": "dist/dtl-source-view.umd.js",
+  "module": "dist/dtl-source-view.mjs",
+  "jsnext:main": "dist/dtl-source-view.mjs",
+  "scripts": {
+    "build": "rollup -c",
+    "pretest": "npm run build",
+    "prettier": "prettier --check src tests",
+    "prettier:fix": "prettier --write src tests examples",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bwhmather/dtl-tools.git"
+  },
+  "author": "Ben Mather <bwhmather@bwhmather.com>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/bwhmather/dtl-tools/issues"
+  },
+  "homepage": "https://github.com/bwhmather/dtl-tools#readme",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^14.1.0",
+    "prettier": "^2.7.1",
+    "rollup": "^2.79.0",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "dependencies": {},
+  "files": [
+    "dist/dtl-source-view.js",
+    "dist/dtl-source-view.js.map",
+    "dist/dtl-source-view.min.js",
+    "dist/dtl-source-view.min.js.map",
+    "dist/dtl-source-view.mjs",
+    "dist/dtl-source-view.mjs.map",
+    "dist/dtl-source-view.umd.js",
+    "dist/dtl-source-view.umd.js.map"
+  ]
+}

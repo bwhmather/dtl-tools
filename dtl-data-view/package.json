@@ -1,0 +1,42 @@
+{
+  "name": "@dtl-tools/dtl-data-view",
+  "version": "0.0.1",
+  "description": "Custom element for displaying a single snapshot from a DTL run",
+  "main": "dist/dtl-data-view.umd.js",
+  "module": "dist/dtl-data-view.mjs",
+  "jsnext:main": "dist/dlt-data-view.mjs",
+  "scripts": {
+    "build": "rollup -c",
+    "pretest": "npm run build",
+    "prettier": "prettier --check src tests",
+    "prettier:fix": "prettier --write src tests examples",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bwhmather/dtl-tools.git"
+  },
+  "author": "Ben Mather <bwhmather@bwhmather.com>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/bwhmather/dtl-tools/issues"
+  },
+  "homepage": "https://github.com/bwhmather/dtl-tools#readme",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^14.1.0",
+    "prettier": "^2.7.1",
+    "rollup": "^2.79.0",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "dependencies": {},
+  "files": [
+    "dist/dtl-data-view.js",
+    "dist/dtl-data-view.js.map",
+    "dist/dtl-data-view.min.js",
+    "dist/dtl-data-view.min.js.map",
+    "dist/dtl-data-view.mjs",
+    "dist/dtl-data-view.mjs.map",
+    "dist/dtl-data-view.umd.js",
+    "dist/dtl-data-view.umd.js.map"
+  ]
+}
