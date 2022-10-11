@@ -29,6 +29,10 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "dependencies": {},
+  "peerDependencies": {
+    "@dtl-tools/dtl-store": "0.0.1",
+    "@dtl-tools/dtl-manifest": "0.0.1"
+  },
   "files": [
     "dist/dtl-data-view.js",
     "dist/dtl-data-view.js.map",
