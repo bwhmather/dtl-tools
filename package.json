@@ -1,0 +1,28 @@
+{
+  "name": "dtl-tools",
+  "version": "0.0.1",
+  "description": "Packages for interacting with DTL traces",
+  "scripts": {
+    "build": "rollup -c",
+    "pretest": "npm run build",
+    "prettier": "prettier --check src tests",
+    "prettier:fix": "prettier --write src tests examples",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bwhmather/dtl-tools.git"
+  },
+  "author": "Ben Mather <bwhmather@bwhmather.com>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/bwhmather/dtl-tools/issues"
+  },
+  "homepage": "https://github.com/bwhmather/dtl-tools#readme",
+  "workspaces": [
+        "packages/dtl-data-view",
+        "packages/dtl-manifest",
+        "packages/dtl-source-view",
+        "packages/dtl-store"
+  ]
+}

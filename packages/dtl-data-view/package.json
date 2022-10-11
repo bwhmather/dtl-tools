@@ -8,8 +8,8 @@
   "scripts": {
     "build": "rollup -c",
     "pretest": "npm run build",
-    "prettier": "prettier --check src tests",
-    "prettier:fix": "prettier --write src tests examples",
+    "prettier": "prettier --check src",
+    "prettier:fix": "prettier --write src",
     "prepack": "npm run build"
   },
   "repository": {
