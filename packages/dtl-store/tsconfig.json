@@ -1,0 +1,12 @@
+{
+  "include": ["src"],
+  "compilerOptions": {
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "target": "es6",
+    "module": "es6",
+    "lib": ["es6", "dom"]
+  }
+}

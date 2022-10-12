@@ -1,4 +1,5 @@
 import { terser } from "rollup-plugin-terser";
+import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
 import url from "@rollup/plugin-url";
 
@@ -9,8 +10,17 @@ const indirect = [
 
 export default [
   {
-    input: "src/index.js",
-    plugins: [resolve(), url({ include: indirect, limit: Infinity })],
+    input: "src/index.ts",
+    plugins: [
+      typescript({
+        compilerOptions: {
+          declaration: true,
+          declarationDir: "dist",
+        },
+      }),
+      resolve(),
+      url({ include: indirect, limit: Infinity }),
+    ],
     output: {
       format: "es",
       file: "dist/dtl-store.mjs",
@@ -19,8 +29,12 @@ export default [
     },
   },
   {
-    input: "src/index.js",
-    plugins: [resolve(), url({ include: indirect, limit: Infinity })],
+    input: "src/index.ts",
+    plugins: [
+      typescript(),
+      resolve(),
+      url({ include: indirect, limit: Infinity }),
+    ],
     output: {
       format: "cjs",
       file: "dist/dtl-store.umd.js",
@@ -29,8 +43,12 @@ export default [
     },
   },
   {
-    input: "src/index.js",
-    plugins: [resolve(), url({ include: indirect, limit: Infinity })],
+    input: "src/index.ts",
+    plugins: [
+      typescript(),
+      resolve(),
+      url({ include: indirect, limit: Infinity }),
+    ],
     output: {
       format: "iife",
       name: "dtlStore",
@@ -40,8 +58,13 @@ export default [
     },
   },
   {
-    input: "src/index.js",
-    plugins: [resolve(), url({ include: indirect, limit: Infinity }), terser()],
+    input: "src/index.ts",
+    plugins: [
+      typescript(),
+      resolve(),
+      url({ include: indirect, limit: Infinity }),
+      terser(),
+    ],
     output: {
       format: "iife",
       name: "dtlStore",

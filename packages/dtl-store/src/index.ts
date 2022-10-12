@@ -1,26 +1,20 @@
-import mainModuleUrl from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm";
-import mainWorkerUrl from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js";
 import * as duckdb from "@duckdb/duckdb-wasm";
 
-import { fetchManifest } from "@dtl-tools/dtl-manifest";
+import { DTLManifest, fetchManifest } from "@dtl-tools/dtl-manifest";
 
-const STYLE = `
-#root {
-    all: initial;
-}
-`;
+import { mainModuleUrl, mainWorkerUrl } from "./duckdb";
 
 class DTLSession {
-  #manifestUrl;
-  #arrayUrl;
+  #manifestUrl: string;
+  #arrayUrl: string;
 
-  #manifest;
-  #db;
+  #manifest: DTLManifest;
+  #db: duckdb.AsyncDuckDB;
 
   /**
    * @private
    */
-  constructor(manifestUrl, arrayUrl) {
+  constructor(manifestUrl: string, arrayUrl: string) {
     this.#manifestUrl = manifestUrl;
     this.#arrayUrl = arrayUrl;
 
@@ -45,23 +39,23 @@ class DTLSession {
 
     // Find arrays referenced by snapshots.
     for (let snapshot of this.#manifest.snapshots()) {
-      for (let column of snapshot.columns()) {
+      for (let column of snapshot.columns) {
         arrays.add(column.array);
       }
     }
 
     // Find arrays referenced by mappings.
     for (let mapping of this.#manifest.mappings()) {
-      arrays.add(mapping.srcArray);
-      arrays.add(mapping.tgtArray);
-      arrays.add(mapping.srcIndexArray);
-      arrays.add(mapping.tgtIndexArray);
+      arrays.add(mapping.sourceArray);
+      arrays.add(mapping.targetArray);
+      arrays.add(mapping.sourceIndexArray);
+      arrays.add(mapping.targetIndexArray);
     }
     let array;
     for (array of arrays) {
       const url = new URL(
         `${this.#arrayUrl}/${array}.parquet`,
-        document.location
+        "" + document.location
       ).href;
       await this.#db.registerFileURL(`${array}.parquet`, url);
     }
@@ -77,14 +71,14 @@ class DTLSession {
     let query = "DESCRIBE SELECT\n";
 
     // Add column bindings.
-    for (const column of snapshot.columns()) {
+    for (const column of snapshot.columns) {
       query += `    ${column.name}.values as ${column.name},\n`;
     }
 
     // Add source clauses.
     query += "FROM\n";
 
-    for (const column of snapshot.columns()) {
+    for (const column of snapshot.columns) {
       query += `    '${column.array}.parquet' ${column.name},\n`;
     }
 
@@ -99,7 +93,7 @@ class DTLSession {
 
   async readSnapshotLength(id) {
     const snapshot = this.#manifest.snapshotById(id);
-    const columns = Array.from(snapshot.columns());
+    const columns = Array.from(snapshot.columns);
 
     let query = "SELECT\n";
 
@@ -122,9 +116,18 @@ class DTLSession {
    *
    * The schema should match the result from `readSnapshotSchema`.
    */
-  async readSnapshotData(id, options) {
+  async readSnapshotData(
+    id: number,
+    options?: { offset?: number; limit?: number }
+  ) {
+    let offset;
+    let limit;
+    if (typeof options != "undefined") {
+      ({ offset, limit } = options);
+    }
+
     const snapshot = this.#manifest.snapshotById(id);
-    const columns = Array.from(snapshot.columns());
+    const columns = Array.from(snapshot.columns);
 
     let query = "SELECT\n";
 
@@ -167,7 +170,7 @@ class DTLSession {
 
     // Add limit clause.
     if (typeof limit != "undefined") {
-      query += `LIMIT ${LIMIT}\n`;
+      query += `LIMIT ${limit}\n`;
     }
 
     // Execute the query.
