@@ -2,13 +2,6 @@
   "name": "dtl-tools",
   "version": "0.0.1",
   "description": "Packages for interacting with DTL traces",
-  "scripts": {
-    "build": "rollup -c",
-    "pretest": "npm run build",
-    "prettier": "prettier --check src tests",
-    "prettier:fix": "prettier --write src tests examples",
-    "prepack": "npm run build"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bwhmather/dtl-tools.git"
