@@ -1,4 +1,3 @@
-DTL Source View
-===============
+# DTL Source View
 
 Custom element for displaying the source code for a DTL run.

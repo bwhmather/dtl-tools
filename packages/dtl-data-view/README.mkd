@@ -1,4 +1,3 @@
-DTL Data View
-=============
+# DTL Data View
 
 Custom element for displaying a single snapshot from a DTL run
