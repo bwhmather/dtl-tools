@@ -1,10 +1,19 @@
 import { terser } from "rollup-plugin-terser";
+import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
 
 export default [
   {
-    input: "src/index.js",
-    plugins: [resolve()],
+    input: "src/index.ts",
+    plugins: [
+      typescript({
+        compilerOptions: {
+          declaration: true,
+          declarationDir: "dist",
+        },
+      }),
+      resolve(),
+    ],
     output: {
       format: "es",
       file: "dist/dtl-manifest.mjs",
@@ -13,8 +22,8 @@ export default [
     },
   },
   {
-    input: "src/index.js",
-    plugins: [resolve()],
+    input: "src/index.ts",
+    plugins: [typescript(), resolve()],
     output: {
       format: "cjs",
       file: "dist/dtl-manifest.umd.js",
@@ -23,8 +32,8 @@ export default [
     },
   },
   {
-    input: "src/index.js",
-    plugins: [resolve()],
+    input: "src/index.ts",
+    plugins: [typescript(), resolve()],
     output: {
       format: "iife",
       name: "dtlManifest",
@@ -34,8 +43,8 @@ export default [
     },
   },
   {
-    input: "src/index.js",
-    plugins: [resolve(), terser()],
+    input: "src/index.ts",
+    plugins: [typescript(), resolve(), terser()],
     output: {
       format: "iife",
       name: "dtlManifest",

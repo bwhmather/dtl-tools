@@ -5,6 +5,7 @@
   "main": "dist/dtl-manifest.umd.js",
   "module": "dist/dtl-manifest.mjs",
   "jsnext:main": "dist/dtl-manifest.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "pretest": "npm run build",
@@ -37,6 +38,7 @@
     "dist/dtl-manifest.mjs",
     "dist/dtl-manifest.mjs.map",
     "dist/dtl-manifest.umd.js",
-    "dist/dtl-manifest.umd.js.map"
+    "dist/dtl-manifest.umd.js.map",
+    "dist/index.d.ts"
   ]
 }
