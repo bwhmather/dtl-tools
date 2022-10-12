@@ -13,9 +13,9 @@
   },
   "homepage": "https://github.com/bwhmather/dtl-tools#readme",
   "workspaces": [
-        "packages/dtl-data-view",
         "packages/dtl-manifest",
-        "packages/dtl-source-view",
-        "packages/dtl-store"
+        "packages/dtl-store",
+        "packages/dtl-data-view",
+        "packages/dtl-source-view"
   ]
 }
