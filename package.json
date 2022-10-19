@@ -32,6 +32,13 @@
     "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.8.4"
   },
+  "files": [
+    "dist/dtl-tools.js",
+    "dist/dtl-tools.js.map",
+    "dist/dtl-tools.min.js",
+    "dist/dtl-tools.min.js.map",
+    "dist/index.d.ts"
+  ],
   "scripts": {
     "prebuild": "npm run --workspaces build",
     "build": "rollup -c",
