@@ -26,14 +26,14 @@ export default [
     output: [
       {
         format: "iife",
-        name: "dtl",
+        name: "dtlTools",
         file: "dist/dtl-tools.js",
         sourcemap: true,
         sourcemapFile: "dist/dtl-tools.js.map",
       },
       {
         format: "iife",
-        name: "dtl",
+        name: "dtlTools",
         file: "dist/dtl-tools.min.js",
         sourcemap: true,
         sourcemapFile: "dist/dtl-tools.min.js.map",
