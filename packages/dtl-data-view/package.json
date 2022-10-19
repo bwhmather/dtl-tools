@@ -5,6 +5,7 @@
   "main": "dist/dtl-data-view.umd.js",
   "module": "dist/dtl-data-view.mjs",
   "jsnext:main": "dist/dlt-data-view.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "pretest": "npm run build",
@@ -25,22 +26,21 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^14.1.0",
     "prettier": "^2.7.1",
-    "rollup": "^2.79.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "rollup": "^2.79.0"
   },
-  "dependencies": {},
   "peerDependencies": {
-    "@dtl-tools/dtl-store": "0.0.1",
-    "@dtl-tools/dtl-manifest": "0.0.1"
+    "@dtl-tools/dtl-manifest": "0.0.1",
+    "@dtl-tools/dtl-store": "0.0.1"
   },
   "files": [
-    "dist/dtl-data-view.js",
-    "dist/dtl-data-view.js.map",
-    "dist/dtl-data-view.min.js",
-    "dist/dtl-data-view.min.js.map",
     "dist/dtl-data-view.mjs",
     "dist/dtl-data-view.mjs.map",
     "dist/dtl-data-view.umd.js",
-    "dist/dtl-data-view.umd.js.map"
-  ]
+    "dist/dtl-data-view.umd.js.map",
+    "dist/index.d.ts"
+  ],
+  "dependencies": {
+    "bdc": "^1.1.0",
+    "rxjs": "^7.5.7"
+  }
 }

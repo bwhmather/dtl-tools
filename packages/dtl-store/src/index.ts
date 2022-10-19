@@ -2,9 +2,10 @@ import * as duckdb from "@duckdb/duckdb-wasm";
 
 import { DTLManifest, fetchManifest } from "@dtl-tools/dtl-manifest";
 
-import { mainModuleUrl, mainWorkerUrl } from "./duckdb";
+let DUCKDB_MAIN_MODULE_URL;
+let DUCKDB_MAIN_WORKER_URL;
 
-class DTLSession {
+export class DTLSession {
   #manifestUrl: string;
   #arrayUrl: string;
 
@@ -29,10 +30,10 @@ class DTLSession {
     this.#manifest = await fetchManifest(this.#manifestUrl);
 
     // === Initialise DuckDB ===
-    const worker = new Worker(mainWorkerUrl);
+    const worker = new Worker(DUCKDB_MAIN_MODULE_URL);
     const logger = new duckdb.ConsoleLogger();
     this.#db = new duckdb.AsyncDuckDB(logger, worker);
-    await this.#db.instantiate(mainModuleUrl);
+    await this.#db.instantiate(DUCKDB_MAIN_WORKER_URL);
 
     // === Register all referenced arrays with DuckDB ===
     let arrays = new Set();
@@ -183,7 +184,15 @@ class DTLSession {
   }
 }
 
-async function createSession(manifestUrl, arrayUrl) {
+export function configure({ duckDbMainModuleUrl, duckDbMainWorkerUrl }) {
+  DUCKDB_MAIN_MODULE_URL = duckDbMainModuleUrl;
+  DUCKDB_MAIN_WORKER_URL = duckDbMainWorkerUrl;
+}
+
+export async function createSession(
+  manifestUrl: string,
+  arrayUrl: string
+): Promise<DTLSession> {
   const session = new DTLSession(manifestUrl, arrayUrl);
   await session.initialise();
   return session;

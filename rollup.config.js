@@ -1,4 +1,4 @@
-// import { terser } from "rollup-plugin-terser";
+import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
 import url from "@rollup/plugin-url";
@@ -7,12 +7,6 @@ export default [
   {
     input: "src/index.ts",
     plugins: [
-      typescript({
-        compilerOptions: {
-          declaration: true,
-          declarationDir: "dist",
-        },
-      }),
       resolve(),
       url({
         include: [
@@ -21,19 +15,29 @@ export default [
         ],
         limit: Infinity,
       }),
+      typescript({
+        compilerOptions: {
+          declaration: true,
+          declarationDir: "dist",
+        },
+      }),
     ],
+    treeshake: false,
     output: [
       {
-        format: "es",
-        file: "dist/dtl-store.mjs",
+        format: "iife",
+        name: "dtl",
+        file: "dist/dtl-tools.js",
         sourcemap: true,
-        sourcemapFile: "dist/dtl-store.mjs.map",
+        sourcemapFile: "dist/dtl-tools.js.map",
       },
       {
-        format: "cjs",
-        file: "dist/dtl-store.umd.js",
+        format: "iife",
+        name: "dtl",
+        file: "dist/dtl-tools.min.js",
         sourcemap: true,
-        sourcemapFile: "dist/dtl-store.umd.js.map",
+        sourcemapFile: "dist/dtl-tools.min.js.map",
+        plugins: [terser()],
       },
     ],
   },

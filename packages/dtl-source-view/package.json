@@ -5,6 +5,7 @@
   "main": "dist/dtl-source-view.umd.js",
   "module": "dist/dtl-source-view.mjs",
   "jsnext:main": "dist/dtl-source-view.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "pretest": "npm run build",
@@ -23,25 +24,25 @@
   },
   "homepage": "https://github.com/bwhmather/dtl-tools#readme",
   "devDependencies": {
-    "@codemirror/commands": "^6.1.0",
-    "@codemirror/view": "^6.2.4",
     "@rollup/plugin-node-resolve": "^14.1.0",
     "prettier": "^2.7.1",
-    "rollup": "^2.79.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "rollup": "^2.79.0"
   },
-  "dependencies": {},
   "peerDependencies": {
     "@dtl-tools/dtl-manifest": "0.0.1"
   },
   "files": [
-    "dist/dtl-source-view.js",
-    "dist/dtl-source-view.js.map",
-    "dist/dtl-source-view.min.js",
-    "dist/dtl-source-view.min.js.map",
     "dist/dtl-source-view.mjs",
     "dist/dtl-source-view.mjs.map",
     "dist/dtl-source-view.umd.js",
-    "dist/dtl-source-view.umd.js.map"
-  ]
+    "dist/dtl-source-view.umd.js.map",
+    "dist/index.d.ts"
+  ],
+  "dependencies": {
+    "@codemirror/commands": "^6.1.2",
+    "@codemirror/view": "^6.4.0",
+    "bdc": "^1.1.0",
+    "codemirror": "^6.0.1",
+    "rxjs": "^7.5.7"
+  }
 }
