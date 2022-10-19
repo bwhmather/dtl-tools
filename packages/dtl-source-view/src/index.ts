@@ -20,13 +20,14 @@ import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { EditorState } from "@codemirror/state";
 import { basicSetup } from "codemirror";
-
+import { BehaviorSubject, switchMap, from } from "rxjs";
+import { fetchManifest } from "@dtl-tools/dtl-manifest";
 function assert(expr: unknown): asserts expr {
   if (!expr) throw new Error("assertion failed");
 }
 
 export class DTLSourceView extends HTMLElement {
-  #editor: EditorView;
+  #manifestUrl: BehaviorSubject<string>;
 
   constructor() {
     super();
@@ -40,33 +41,64 @@ export class DTLSourceView extends HTMLElement {
       ],
     });
 
-    this.#editor = new EditorView({
+    const editor = new EditorView({
       state: startState,
       parent: this.shadowRoot,
     });
 
-    const slot = document.createElement("slot");
-    slot.style.display = "none";
-    this.shadowRoot.appendChild(slot);
+    this.#manifestUrl = new BehaviorSubject("");
 
-    slot.addEventListener("slotchange", (event) => {
-      assert(event.target instanceof HTMLSlotElement);
+    const manifest = new BehaviorSubject(undefined);
+    this.#manifestUrl
+      .pipe(
+        switchMap((manifestUrl: string) => {
+          return from(
+            (async () => {
+              if (manifestUrl) {
+                return await fetchManifest(manifestUrl);
+              }
+            })()
+          );
+        })
+      )
+      .subscribe(manifest);
 
-      const children = event.target.assignedNodes();
-
-      let text = "";
-      for (const child of children) {
-        text += child.textContent;
-      }
-
-      const transaction = this.#editor.state.update({
+    manifest.subscribe((manifest) => {
+      if (!manifest) return;
+      const transaction = editor.state.update({
         changes: {
           from: 0,
-          to: this.#editor.state.doc.length,
-          insert: text,
+          to: editor.state.doc.length,
+          insert: manifest.source,
         },
       });
-      this.#editor.dispatch(transaction);
+      editor.dispatch(transaction);
     });
+  }
+
+  get manifest() {
+    return this.getAttribute("manifest");
+  }
+
+  set manifest(value) {
+    this.setAttribute("manifest", value);
+  }
+
+  static get observedAttributes() {
+    return ["manifest"];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "manifest":
+        this.#manifestUrl.next(newValue);
+        break;
+    }
+  }
+
+  connectedCallback() {}
+
+  disconnectedCallback() {
+    // TODO decrement ref count on manifest
   }
 }
