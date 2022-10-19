@@ -77,7 +77,7 @@ export class DTLSourceView extends HTMLElement {
   }
 
   get manifest() {
-    return this.getAttribute("manifest");
+    return this.#manifestUrl.value;
   }
 
   set manifest(value) {
