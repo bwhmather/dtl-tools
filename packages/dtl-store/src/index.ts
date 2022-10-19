@@ -48,10 +48,10 @@ export class DTLSession {
     this.#manifest = await fetchManifest(this.#manifestUrl);
 
     // === Initialise DuckDB ===
-    const worker = new Worker(DUCKDB_MAIN_MODULE_URL);
+    const worker = new Worker(DUCKDB_MAIN_WORKER_URL);
     const logger = new duckdb.ConsoleLogger();
     this.#db = new duckdb.AsyncDuckDB(logger, worker);
-    await this.#db.instantiate(DUCKDB_MAIN_WORKER_URL);
+    await this.#db.instantiate(DUCKDB_MAIN_MODULE_URL);
 
     // === Register all referenced arrays with DuckDB ===
     let arrays = new Set();
