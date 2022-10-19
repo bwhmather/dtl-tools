@@ -22,11 +22,11 @@ import { EditorState } from "@codemirror/state";
 import { basicSetup } from "codemirror";
 
 function assert(expr: unknown): asserts expr {
-    if (!expr) throw new Error("assertion failed");
+  if (!expr) throw new Error("assertion failed");
 }
 
 export class DTLSourceView extends HTMLElement {
-  #editor: EditorView
+  #editor: EditorView;
 
   constructor() {
     super();

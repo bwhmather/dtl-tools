@@ -13,13 +13,13 @@ export default [
       }),
       resolve(),
     ],
-    external: id => {
-        // Bundle modules at absolute paths.
-        if (/^\//.test(id)) return false;
-        // Bundle modules at relative paths.
-        if (/^.\//.test(id)) return false;
-        // Import anything else.
-        return true;
+    external: (id) => {
+      // Bundle modules at absolute paths.
+      if (/^\//.test(id)) return false;
+      // Bundle modules at relative paths.
+      if (/^.\//.test(id)) return false;
+      // Import anything else.
+      return true;
     },
     output: [
       {
