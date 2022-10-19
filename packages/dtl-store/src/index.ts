@@ -73,7 +73,7 @@ export class DTLSession {
     let array;
     for (array of arrays) {
       const url = new URL(
-        `${this.#arrayUrl}/${array}.parquet`,
+        `${this.#arrayUrl.replace(/\/*$/, "")}/${array}.parquet`,
         "" + document.location
       ).href;
       await this.#db.registerFileURL(`${array}.parquet`, url);
