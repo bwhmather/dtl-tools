@@ -77,7 +77,7 @@ export class DTLManifest {
   #mappings: DTLMapping[];
 
   #rowToOffsetMap: number[];
-  #offsetToSnapshotMap: number[];
+  #offsetToSnapshotMap: (number | undefined)[];
 
   constructor({
     source,
@@ -153,10 +153,17 @@ export class DTLManifest {
     return this.#snapshots[snapshotId];
   }
 
-  snapshotByRowColumn(row: number, col: number): DTLSnapshot {
-    const offset = this.#rowToOffsetMap[row] + col;
+  snapshotByOffset(offset: number): DTLSnapshot | undefined {
     const snapshotId = this.#offsetToSnapshotMap[offset];
-    return this.#snapshots[snapshotId];
+    if (typeof snapshotId === "undefined") {
+      return undefined;
+    }
+    return this.snapshotById(snapshotId);
+  }
+
+  snapshotByRowColumn(row: number, col: number): DTLSnapshot | undefined {
+    const offset = this.#rowToOffsetMap[row] + col;
+    return this.snapshotByOffset(offset);
   }
 
   *mappings(): IterableIterator<DTLMapping> {
@@ -166,7 +173,7 @@ export class DTLManifest {
   }
 }
 
-export function manifestFromJson(data: string): DTLManifest {
+export function manifestFromJson(data: any): DTLManifest {
   const source = data["source"].replace(/\r\n|\r/g, "\n");
 
   const snapshots = [];
@@ -182,7 +189,7 @@ export function manifestFromJson(data: string): DTLManifest {
   return new DTLManifest({ source, snapshots, mappings });
 }
 
-export async function fetchManifest(url) {
+export async function fetchManifest(url: string): Promise<DTLManifest> {
   const response = await fetch(url);
   const data = await response.json();
   const manifest = manifestFromJson(data);
