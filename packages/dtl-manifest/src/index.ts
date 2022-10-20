@@ -153,15 +153,15 @@ export class DTLManifest {
     return this.#snapshots[snapshotId];
   }
 
-  snapshotByOffset(offset: number): DTLSnapshot | undefined {
+  snapshotByOffset(offset: number): DTLSnapshot | null {
     const snapshotId = this.#offsetToSnapshotMap[offset];
     if (typeof snapshotId === "undefined") {
-      return undefined;
+      return null;
     }
     return this.snapshotById(snapshotId);
   }
 
-  snapshotByRowColumn(row: number, col: number): DTLSnapshot | undefined {
+  snapshotByRowColumn(row: number, col: number): DTLSnapshot | null {
     const offset = this.#rowToOffsetMap[row] + col;
     return this.snapshotByOffset(offset);
   }
