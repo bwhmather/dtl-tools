@@ -32,7 +32,8 @@
     "typescript": "^4.8.4"
   },
   "peerDependencies": {
-    "@dtl-tools/dtl-manifest": "0.0.1"
+    "@dtl-tools/dtl-manifest": "0.0.1",
+    "apache-arrow": "^9.0.0"
   },
   "files": [
     "dist/dtl-store.mjs",
