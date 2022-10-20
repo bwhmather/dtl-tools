@@ -123,7 +123,7 @@ export class DTLSourceView extends HTMLElement {
     return ["manifest"];
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     switch (name) {
       case "manifest":
         this.#manifestUrl.next(newValue);
