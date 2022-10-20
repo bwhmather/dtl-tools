@@ -27,6 +27,8 @@ function assert(expr: unknown): asserts expr {
 }
 
 export class DTLSourceView extends HTMLElement {
+  #editor: EditorView;
+
   #manifestUrl: BehaviorSubject<string>;
 
   constructor() {
@@ -38,10 +40,22 @@ export class DTLSourceView extends HTMLElement {
         basicSetup,
         EditorState.readOnly.of(true),
         keymap.of(defaultKeymap),
+        EditorView.updateListener.of((update) => {
+          const prevRange = update.startState.selection.main;
+          const nextRange = update.state.selection.main;
+
+          if (
+            prevRange.head !== nextRange.head ||
+            prevRange.anchor != nextRange.anchor
+          ) {
+            const event = new Event("select");
+            this.dispatchEvent(event);
+          }
+        }),
       ],
     });
 
-    const editor = new EditorView({
+    this.#editor = new EditorView({
       state: startState,
       parent: this.shadowRoot,
     });
@@ -65,23 +79,44 @@ export class DTLSourceView extends HTMLElement {
 
     manifest.subscribe((manifest) => {
       if (!manifest) return;
-      const transaction = editor.state.update({
+      const transaction = this.#editor.state.update({
         changes: {
           from: 0,
-          to: editor.state.doc.length,
+          to: this.#editor.state.doc.length,
           insert: manifest.source,
         },
       });
-      editor.dispatch(transaction);
+      this.#editor.dispatch(transaction);
     });
   }
 
-  get manifest() {
+  get manifest(): string {
     return this.#manifestUrl.value;
   }
 
-  set manifest(value) {
+  set manifest(value: string) {
     this.setAttribute("manifest", value);
+  }
+
+  get selectionStart(): number {
+    const range = this.#editor.state.selection.main;
+    return Math.min(range.anchor, range.head);
+  }
+
+  get selectionEnd(): number {
+    const range = this.#editor.state.selection.main;
+    return Math.max(range.anchor, range.head);
+  }
+
+  get selectionDirection(): "forward" | "backward" | "none" {
+    const range = this.#editor.state.selection.main;
+    if (range.head > range.anchor) {
+      return "forward";
+    }
+    if (range.head < range.anchor) {
+      return "backward";
+    }
+    return "none";
   }
 
   static get observedAttributes() {
