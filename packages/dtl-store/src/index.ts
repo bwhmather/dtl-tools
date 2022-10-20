@@ -17,18 +17,23 @@
  */
 
 import * as duckdb from "@duckdb/duckdb-wasm";
+import { Schema, Table } from "apache-arrow";
 
 import { DTLManifest, fetchManifest } from "@dtl-tools/dtl-manifest";
 
-let DUCKDB_MAIN_MODULE_URL;
-let DUCKDB_MAIN_WORKER_URL;
+let DUCKDB_MAIN_MODULE_URL: string | undefined;
+let DUCKDB_MAIN_WORKER_URL: string | undefined;
+
+function assert(expr: unknown): asserts expr {
+  if (!expr) throw new Error("assertion failed");
+}
 
 export class DTLSession {
   #manifestUrl: string;
   #arrayUrl: string;
 
-  #manifest: DTLManifest;
-  #db: duckdb.AsyncDuckDB;
+  #manifest: DTLManifest | undefined;
+  #db: duckdb.AsyncDuckDB | undefined;
 
   /**
    * @private
@@ -37,14 +42,17 @@ export class DTLSession {
     this.#manifestUrl = manifestUrl;
     this.#arrayUrl = arrayUrl;
 
-    this.#manifest = null;
-    this.#db = null;
+    this.#manifest = undefined;
+    this.#db = undefined;
   }
 
   /**
    * @private
    */
   async initialise() {
+    assert(typeof DUCKDB_MAIN_WORKER_URL !== "undefined");
+    assert(typeof DUCKDB_MAIN_MODULE_URL !== "undefined");
+
     this.#manifest = await fetchManifest(this.#manifestUrl);
 
     // === Initialise DuckDB ===
@@ -84,7 +92,10 @@ export class DTLSession {
    * Returns an `arrow.Schema` object describing the format of the requested
    * snapshot.
    */
-  async readSnapshotSchema(id) {
+  async readSnapshotSchema(id: number): Promise<Table> {
+    assert(typeof this.#manifest !== "undefined");
+    assert(typeof this.#db !== "undefined");
+
     const snapshot = this.#manifest.snapshotById(id);
 
     let query = "DESCRIBE SELECT\n";
@@ -110,7 +121,10 @@ export class DTLSession {
     }
   }
 
-  async readSnapshotLength(id) {
+  async readSnapshotLength(id: number): Promise<Table> {
+    assert(typeof this.#manifest !== "undefined");
+    assert(typeof this.#db !== "undefined");
+
     const snapshot = this.#manifest.snapshotById(id);
     const columns = Array.from(snapshot.columns);
 
@@ -138,7 +152,10 @@ export class DTLSession {
   async readSnapshotData(
     id: number,
     options?: { offset?: number; limit?: number }
-  ) {
+  ): Promise<Table> {
+    assert(typeof this.#manifest !== "undefined");
+    assert(typeof this.#db !== "undefined");
+
     let offset;
     let limit;
     if (typeof options != "undefined") {
@@ -202,7 +219,13 @@ export class DTLSession {
   }
 }
 
-export function configure({ duckDbMainModuleUrl, duckDbMainWorkerUrl }) {
+export function configure({
+  duckDbMainModuleUrl,
+  duckDbMainWorkerUrl,
+}: {
+  duckDbMainModuleUrl: string;
+  duckDbMainWorkerUrl: string;
+}) {
   DUCKDB_MAIN_MODULE_URL = duckDbMainModuleUrl;
   DUCKDB_MAIN_WORKER_URL = duckDbMainWorkerUrl;
 }
