@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "name": "dtl-viewer",
+  "description": "DTL Viewer",
+  "author": "Ben Mather <bwhmather@bwhmather.com> (bwhmather.com)",
+  "dependencies": {
+    "@dtl-tools/dtl-manifest": "file:../../dtl-manifest",
+    "@dtl-tools/dtl-store": "file:../../dtl-store",
+    "@dtl-tools/dtl-source-view": "file:../../dtl-source-view",
+    "@dtl-tools/dtl-data-view": "file:../../dtl-data-view",
+    "bdc": "^1.0.0",
+    "bootstrap": "^5.2.1",
+    "codemirror": "^6.0.1",
+    "express": "^4.18.1",
+    "monaco-editor": "^0.34.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^14.1.0",
+    "prettier": "^2.7.1",
+    "rollup": "^2.79.0"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "pretest": "npm run build",
+    "prettier": "prettier --check server.js index.js",
+    "prettier:fix": "prettier --write server.js index.js"
+  }
+}
