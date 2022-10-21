@@ -4,7 +4,8 @@
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "strict": true,
     "target": "es6",
     "module": "es6",
     "lib": ["es6", "dom"]

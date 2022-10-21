@@ -25,7 +25,10 @@ import {
   Subject,
   combineLatest,
   switchMap,
+  startWith,
 } from "rxjs";
+import { Schema, Table } from "apache-arrow";
+
 import { createSession, DTLSession } from "@dtl-tools/dtl-store";
 
 const STYLE = `
@@ -35,18 +38,18 @@ const STYLE = `
 `;
 
 export class DTLDataView extends HTMLElement {
-  #manifestUrl;
-  #arrayUrl;
+  #manifestUrl: BehaviorSubject<string>;
+  #arrayUrl: BehaviorSubject<string>;
 
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
 
-    this.#manifestUrl = new Subject();
-    this.#arrayUrl = new Subject();
+    this.#manifestUrl = new BehaviorSubject("");
+    this.#arrayUrl = new BehaviorSubject("");
 
     // Manifest + Data store => Session
-    const session = new Subject();
+    const session = new BehaviorSubject<DTLSession | undefined>(undefined);
     combineLatest({
       manifestUrl: this.#manifestUrl,
       arrayUrl: this.#arrayUrl,
@@ -67,19 +70,19 @@ export class DTLDataView extends HTMLElement {
                   return await createSession(manifestUrl, arrayUrl);
                 }
               })()
-            );
+            ).pipe(startWith(undefined));
           }
         )
       )
       .subscribe(session);
 
     // TODO
-    const snapshotId = new Observable((subscriber) => {
-      subscriber.next(0);
-    });
+    const snapshotId = new BehaviorSubject<number | null>(0);
 
     // Session + Target => Headers
-    const headers = new BehaviorSubject(undefined);
+    // `undefined` indicates that headers are loading.  `null` indicates that
+    // there are no headers to load.
+    const headers = new BehaviorSubject<Table | undefined | null>(undefined);
 
     combineLatest({
       session: session,
@@ -91,17 +94,20 @@ export class DTLDataView extends HTMLElement {
             session,
             snapshotId,
           }: {
-            session: DTLSession;
-            snapshotId: number;
+            session: DTLSession | undefined;
+            snapshotId: number | null;
           }) =>
             from(
               (async () => {
-                if (!session) {
-                  return;
+                if (typeof session === "undefined") {
+                  return undefined;
+                }
+                if (snapshotId === null) {
+                  return null;
                 }
                 return await session.readSnapshotSchema(snapshotId);
               })()
-            )
+            ).pipe(startWith(undefined))
         )
       )
       .subscribe(headers);
@@ -109,7 +115,10 @@ export class DTLDataView extends HTMLElement {
     headers.subscribe((table) => table && console.table(table.toArray()));
 
     // Session + Target => Length
-    const length = new BehaviorSubject(undefined);
+    // `undefined` indicates that the length is still being read.  `null`
+    // indicates indicates that requesting the length at this point is
+    // meaningless.
+    const length = new BehaviorSubject<number | undefined | null>(null);
 
     combineLatest({
       session: session,
@@ -121,17 +130,20 @@ export class DTLDataView extends HTMLElement {
             session,
             snapshotId,
           }: {
-            session: DTLSession;
-            snapshotId: number;
+            session: DTLSession | undefined;
+            snapshotId: number | null;
           }) =>
             from(
               (async () => {
-                if (!session) {
-                  return;
+                if (typeof session === "undefined") {
+                  return undefined;
+                }
+                if (snapshotId === null) {
+                  return null;
                 }
                 return await session.readSnapshotLength(snapshotId);
               })()
-            )
+            ).pipe(startWith(undefined))
         )
       )
       .subscribe((length) => {
@@ -139,7 +151,7 @@ export class DTLDataView extends HTMLElement {
       });
 
     // Session + Target + Scroll position => data
-    const data = new BehaviorSubject(undefined);
+    const data = new BehaviorSubject<Table | undefined | null>(undefined);
 
     combineLatest({
       session: session,
@@ -151,17 +163,20 @@ export class DTLDataView extends HTMLElement {
             session,
             snapshotId,
           }: {
-            session: DTLSession;
-            snapshotId: number;
+            session: DTLSession | undefined;
+            snapshotId: number | null;
           }) =>
             from(
               (async () => {
-                if (!session) {
-                  return;
+                if (typeof session === "undefined") {
+                  return null;
+                }
+                if (snapshotId === null) {
+                  return null;
                 }
                 return await session.readSnapshotData(snapshotId);
               })()
-            )
+            ).pipe(startWith(undefined))
         )
       )
       .subscribe(data);
@@ -197,7 +212,7 @@ export class DTLDataView extends HTMLElement {
       }
 
       clobber(
-        this.shadowRoot,
+        this.shadowRoot!,
         h("style", STYLE),
         h(
           "table",
@@ -209,43 +224,25 @@ export class DTLDataView extends HTMLElement {
     });
   }
 
-  renderSource() {
-    // If source is unspecified, hides the source table and mapping column.
+  get manifest(): string | null {
+    return this.getAttribute("manifest") || null;
+  }
+  set manifest(value: string | null) {
+    this.setAttribute("manifest", value || "");
   }
 
-  renderTarget() {
-    // Get column names and types for headers.
-
-    clobber(this.shadowRoot, h("table", h("tr")));
-
-    // Check if target has changed.
-
-    // Clear old table contents.
-
-    // Render table header.
-
-    // Render table contents.
+  get store(): string | null {
+    return this.getAttribute("store") || null;
   }
-
-  get manifest() {
-    return this.getAttribute("manifest");
-  }
-  set manifest(value) {
-    this.setAttribute("manifest", value);
-  }
-
-  get store() {
-    return this.getAttribute("store");
-  }
-  set store(value) {
-    this.setAttribute("store", value);
+  set store(value: string | null) {
+    this.setAttribute("store", value || "");
   }
 
   static get observedAttributes() {
     return ["manifest", "store", "source", "target"];
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     switch (name) {
       case "manifest":
         this.#manifestUrl.next(newValue);
