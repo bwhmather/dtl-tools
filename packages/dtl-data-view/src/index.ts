@@ -63,7 +63,6 @@ export class DTLDataView extends HTMLElement {
             manifestUrl: string;
             arrayUrl: string;
           }) => {
-            console.log({ manifestUrl, arrayUrl });
             return from(
               (async () => {
                 if (manifestUrl && arrayUrl) {
@@ -147,7 +146,6 @@ export class DTLDataView extends HTMLElement {
         )
       )
       .subscribe((length) => {
-        console.log(length);
       });
 
     // Session + Target + Scroll position => data
