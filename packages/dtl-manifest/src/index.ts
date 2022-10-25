@@ -38,12 +38,13 @@ export function columnFromJson(data: any): DTLColumn {
 }
 
 export type DTLSnapshot = {
+  readonly id: number;
   readonly start: DTLLocation;
   readonly end: DTLLocation;
   readonly columns: DTLColumn[];
 };
 
-export function snapshotFromJson(data: any): DTLSnapshot {
+export function snapshotFromJson(id: number, data: any): DTLSnapshot {
   const start = locationFromJson(data.start);
   const end = locationFromJson(data.end);
 
@@ -52,18 +53,20 @@ export function snapshotFromJson(data: any): DTLSnapshot {
     columns.push(columnFromJson(columnData));
   }
 
-  return { start, end, columns };
+  return { id, start, end, columns };
 }
 
 export type DTLMapping = {
+  readonly id: number;
   readonly sourceArray: string;
   readonly targetArray: string;
   readonly sourceIndexArray: string;
   readonly targetIndexArray: string;
 };
 
-export function mappingFromJson(data: any): DTLMapping {
+export function mappingFromJson(id: number, data: any): DTLMapping {
   return {
+    id: id,
     sourceArray: data["sourceArray"],
     targetArray: data["targetArray"],
     sourceIndexArray: data["sourceIndexArray"],
@@ -178,13 +181,19 @@ export function manifestFromJson(data: any): DTLManifest {
   const source = data["source"].replace(/\r\n|\r/g, "\n");
 
   const snapshots = [];
-  for (let snapshotData of data["snapshots"]) {
-    snapshots.push(snapshotFromJson(snapshotData));
+  for (
+    let snapshotId = 0;
+    snapshotId < data["snapshots"].length;
+    snapshotId++
+  ) {
+    const snapshotData = data["snapshots"][snapshotId];
+    snapshots.push(snapshotFromJson(snapshotId, snapshotData));
   }
 
   const mappings = [];
-  for (let mappingData of data["mappings"]) {
-    mappings.push(mappingFromJson(mappingData));
+  for (let mappingId = 0; mappingId < data["mappings"].length; mappingId++) {
+    const mappingData = data["mappings"][mappingId];
+    mappings.push(mappingFromJson(mappingId, mappingData));
   }
 
   return new DTLManifest({ source, snapshots, mappings });
