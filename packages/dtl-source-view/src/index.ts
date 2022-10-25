@@ -20,8 +20,9 @@ import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { EditorState } from "@codemirror/state";
 import { basicSetup } from "codemirror";
-import { BehaviorSubject, switchMap, from } from "rxjs";
-import { fetchManifest } from "@dtl-tools/dtl-manifest";
+import { BehaviorSubject, startWith, switchMap, from } from "rxjs";
+import { DTLManifest, fetchManifest } from "@dtl-tools/dtl-manifest";
+
 function assert(expr: unknown): asserts expr {
   if (!expr) throw new Error("assertion failed");
 }
@@ -29,6 +30,7 @@ function assert(expr: unknown): asserts expr {
 export class DTLSourceView extends HTMLElement {
   #editor: EditorView;
 
+  #manifest: BehaviorSubject<DTLManifest | undefined>;
   #manifestUrl: BehaviorSubject<string>;
 
   constructor() {
@@ -46,7 +48,7 @@ export class DTLSourceView extends HTMLElement {
 
           if (
             prevRange.head !== nextRange.head ||
-            prevRange.anchor != nextRange.anchor
+            prevRange.anchor !== nextRange.anchor
           ) {
             const event = new Event("select");
             this.dispatchEvent(event);
@@ -62,7 +64,7 @@ export class DTLSourceView extends HTMLElement {
 
     this.#manifestUrl = new BehaviorSubject("");
 
-    const manifest = new BehaviorSubject(undefined);
+    this.#manifest = new BehaviorSubject(undefined);
     this.#manifestUrl
       .pipe(
         switchMap((manifestUrl: string) => {
@@ -72,12 +74,12 @@ export class DTLSourceView extends HTMLElement {
                 return await fetchManifest(manifestUrl);
               }
             })()
-          );
+          ).pipe(startWith(undefined));
         })
       )
-      .subscribe(manifest);
+      .subscribe(this.#manifest);
 
-    manifest.subscribe((manifest) => {
+    this.#manifest.subscribe((manifest) => {
       if (!manifest) return;
       const transaction = this.#editor.state.update({
         changes: {
@@ -106,6 +108,34 @@ export class DTLSourceView extends HTMLElement {
   get selectionEnd(): number {
     const range = this.#editor.state.selection.main;
     return Math.max(range.anchor, range.head);
+  }
+
+  get source(): number | null {
+    const manifest = this.#manifest.value;
+    if (typeof manifest === "undefined") {
+      return null;
+    }
+
+    const snapshot = manifest.snapshotByOffset(this.selectionStart);
+    if (!snapshot) {
+      return null;
+    }
+
+    return snapshot.id;
+  }
+
+  get target(): number | null {
+    const manifest = this.#manifest.value;
+    if (typeof manifest === "undefined") {
+      return null;
+    }
+
+    const snapshot = manifest.snapshotByOffset(this.selectionEnd);
+    if (!snapshot) {
+      return null;
+    }
+
+    return snapshot.id;
   }
 
   get selectionDirection(): "forward" | "backward" | "none" {
