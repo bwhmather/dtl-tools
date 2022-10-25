@@ -41,12 +41,18 @@ export class DTLDataView extends HTMLElement {
   #manifestUrl: BehaviorSubject<string>;
   #arrayUrl: BehaviorSubject<string>;
 
+  #source: BehaviorSubject<number | null>;
+  #target: BehaviorSubject<number | null>;
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
 
     this.#manifestUrl = new BehaviorSubject("");
     this.#arrayUrl = new BehaviorSubject("");
+
+    this.#source = new BehaviorSubject<number | null>(null);
+    this.#target = new BehaviorSubject<number | null>(null);
 
     // Manifest + Data store => Session
     const session = new BehaviorSubject<DTLSession | undefined>(undefined);
@@ -75,9 +81,6 @@ export class DTLDataView extends HTMLElement {
       )
       .subscribe(session);
 
-    // TODO
-    const snapshotId = new BehaviorSubject<number | null>(0);
-
     // Session + Target => Headers
     // `undefined` indicates that schema is loading.  `null` indicates that
     // there is no schema to load.
@@ -85,7 +88,7 @@ export class DTLDataView extends HTMLElement {
 
     combineLatest({
       session: session,
-      snapshotId: snapshotId,
+      snapshotId: this.#target,
     })
       .pipe(
         switchMap(
@@ -121,7 +124,7 @@ export class DTLDataView extends HTMLElement {
 
     combineLatest({
       session: session,
-      snapshotId: snapshotId,
+      snapshotId: this.#target,
     })
       .pipe(
         switchMap(
@@ -145,15 +148,14 @@ export class DTLDataView extends HTMLElement {
             ).pipe(startWith(undefined))
         )
       )
-      .subscribe((length) => {
-      });
+      .subscribe((length) => {});
 
     // Session + Target + Scroll position => data
     const data = new BehaviorSubject<Table | undefined | null>(undefined);
 
     combineLatest({
       session: session,
-      snapshotId: snapshotId,
+      snapshotId: this.#target,
     })
       .pipe(
         switchMap(
@@ -236,6 +238,22 @@ export class DTLDataView extends HTMLElement {
     this.setAttribute("store", value || "");
   }
 
+  get source(): number | null {
+    return this.#source.value;
+  }
+
+  set source(value: number | null) {
+    this.#source.next(value);
+  }
+
+  get target(): number | null {
+    return this.#target.value;
+  }
+
+  set target(value: number | null) {
+    this.#target.next(value);
+  }
+
   static get observedAttributes() {
     return ["manifest", "store", "source", "target"];
   }
@@ -251,6 +269,14 @@ export class DTLDataView extends HTMLElement {
       case "store":
         this.#arrayUrl.next(newValue);
         break;
+      case "source": {
+        const value = parseInt(newValue);
+        this.source = isNaN(value) ? null : value;
+      }
+      case "target": {
+        const value = parseInt(newValue);
+        this.target = isNaN(value) ? null : value;
+      }
     }
   }
 
