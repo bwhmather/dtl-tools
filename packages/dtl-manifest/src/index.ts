@@ -102,7 +102,7 @@ export class DTLManifest {
 
     // === Build a map from source offset to optional snapshot index ===
     // Sort snapshots in reverse order of specificity.
-    let indexes = [...Array(this.#snapshots).keys()];
+    let indexes = [...this.#snapshots.keys()];
     indexes.sort((ia, ib) => {
       let a = this.#snapshots[ia];
       let b = this.#snapshots[ib];
@@ -117,12 +117,13 @@ export class DTLManifest {
       );
     });
 
+    this.#offsetToSnapshotMap = [];
     for (let index of indexes) {
       const snapshot = this.#snapshots[index];
 
       const startOffset = this.rowColToOffset(
         snapshot.start.lineno,
-        snapshot.end.column
+        snapshot.start.column
       );
       const endOffset = this.rowColToOffset(
         snapshot.end.lineno,
