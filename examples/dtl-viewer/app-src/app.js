@@ -10,8 +10,14 @@ import {
 } from "rxjs";
 
 let $root;
+let target = null;
 
-function redraw(manifest) {
+function handleSelectionChanged(event) {
+    target = event.target.target;
+    redraw();
+}
+
+function redraw() {
   clobber(
     $root,
     h(
@@ -23,12 +29,12 @@ function redraw(manifest) {
         h(
           "div",
           { class: "col border" },
-          h("dtl-source-view", { manifest: "./manifest.json" })
+          h("dtl-source-view", { manifest: "./manifest.json", onselect: handleSelectionChanged })
         ),
         h(
           "div",
           { class: "col border" },
-          h("dtl-data-view", { manifest: "./manifest.json", store: "./data/" })
+          h("dtl-data-view", { manifest: "./manifest.json", store: "./data/", target: target })
         )
       )
     )
