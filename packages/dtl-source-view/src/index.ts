@@ -124,6 +124,9 @@ export class DTLSourceView extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (newValue === oldValue) {
+      return;
+    }
     switch (name) {
       case "manifest":
         this.#manifestUrl.next(newValue);
