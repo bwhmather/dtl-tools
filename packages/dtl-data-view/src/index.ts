@@ -79,9 +79,9 @@ export class DTLDataView extends HTMLElement {
     const snapshotId = new BehaviorSubject<number | null>(0);
 
     // Session + Target => Headers
-    // `undefined` indicates that headers are loading.  `null` indicates that
-    // there are no headers to load.
-    const headers = new BehaviorSubject<Table | undefined | null>(undefined);
+    // `undefined` indicates that schema is loading.  `null` indicates that
+    // there is no schema to load.
+    const schema = new BehaviorSubject<Schema | undefined | null>(undefined);
 
     combineLatest({
       session: session,
@@ -109,9 +109,9 @@ export class DTLDataView extends HTMLElement {
             ).pipe(startWith(undefined))
         )
       )
-      .subscribe(headers);
+      .subscribe(schema);
 
-    headers.subscribe((table) => table && console.table(table.toArray()));
+    schema.subscribe((schema) => console.log(schema));
 
     // Session + Target => Length
     // `undefined` indicates that the length is still being read.  `null`
@@ -180,24 +180,24 @@ export class DTLDataView extends HTMLElement {
       .subscribe(data);
 
     combineLatest({
-      headers,
+      schema,
       length,
       data,
-    }).subscribe(({ headers, length, data }) => {
-      if (!headers || !data) {
+    }).subscribe(({ schema, length, data }) => {
+      if (!schema || !data) {
         return;
       }
 
       const columnNames = [];
-      for (const column of headers) {
-        columnNames.push(column.column_name);
+      for (const field of schema.fields) {
+        columnNames.push(field.name);
       }
 
       const rowElements = [];
 
       const headerElements = [];
-      for (const column of headers) {
-        headerElements.push(h("th", column.column_name));
+      for (const field of schema.fields) {
+        headerElements.push(h("th", field.name));
       }
 
       for (const row of data) {

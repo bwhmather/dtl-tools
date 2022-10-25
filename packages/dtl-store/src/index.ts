@@ -17,7 +17,7 @@
  */
 
 import * as duckdb from "@duckdb/duckdb-wasm";
-import { Schema, Table } from "apache-arrow";
+import { DataType, Schema, Table, Vector } from "apache-arrow";
 
 import { DTLManifest, fetchManifest } from "@dtl-tools/dtl-manifest";
 
@@ -88,37 +88,91 @@ export class DTLSession {
     }
   }
 
-  /**
-   * Returns an `arrow.Schema` object describing the format of the requested
-   * snapshot.
-   */
-  async readSnapshotSchema(id: number): Promise<Table> {
+  async readArraySchema(array: string): Promise<Schema> {
     assert(typeof this.#manifest !== "undefined");
     assert(typeof this.#db !== "undefined");
 
-    const snapshot = this.#manifest.snapshotById(id);
+    let query = "";
+    query += `SELECT\n`;
+    query += `    values\n`;
+    query += `FROM\n`;
+    query += `    '${array}.parquet'\n`;
+    query += `LIMIT 0`;
 
-    let query = "DESCRIBE SELECT\n";
+    // Execute the query.
+    const conn = await this.#db.connect();
+    try {
+      const table = await conn.query(query);
+      return table.schema;
+    } finally {
+      await conn.close();
+    }
+  }
 
-    // Add column bindings.
-    for (const column of snapshot.columns) {
-      query += `    ${column.name}.values as ${column.name},\n`;
+  async readArrayData(
+    array: string,
+    options?: { offset?: number; limit?: number }
+  ): Promise<Vector> {
+    assert(typeof this.#manifest !== "undefined");
+    assert(typeof this.#db !== "undefined");
+
+    let offset;
+    let limit;
+    if (typeof options != "undefined") {
+      ({ offset, limit } = options);
     }
 
-    // Add source clauses.
-    query += "FROM\n";
+    let query = "";
+    query += `SELECT\n`;
+    query += `    values\n`;
+    query += `FROM\n`;
+    query += `    '${array}.parquet'\n`;
 
-    for (const column of snapshot.columns) {
-      query += `    '${column.array}.parquet' ${column.name},\n`;
+    // Add offset clause.
+    if (typeof offset != "undefined") {
+      query += `OFFSET ${offset}\n`;
+    }
+
+    // Add limit clause.
+    if (typeof limit != "undefined") {
+      query += `LIMIT ${limit}\n`;
     }
 
     // Execute the query.
     const conn = await this.#db.connect();
     try {
-      return await conn.query(query);
+      const table = await conn.query(query);
+      const column = table.getChild("values");
+      if (column === null) {
+        throw new Error();
+      }
+      return column;
     } finally {
       await conn.close();
     }
+  }
+
+  /**
+   * Returns an `arrow.Schema` object describing the format of the requested
+   * snapshot.
+   */
+  async readSnapshotSchema(id: number): Promise<Schema> {
+    assert(typeof this.#manifest !== "undefined");
+    assert(typeof this.#db !== "undefined");
+
+    const snapshot = this.#manifest.snapshotById(id);
+    const columns = Array.from(snapshot.columns);
+
+    const fields = [];
+    for (const column of columns) {
+      const arraySchema = await this.readArraySchema(column.array);
+      const arrayField = arraySchema.fields[0];
+      const columnField = arrayField.clone({ name: column.name });
+      fields.push(columnField);
+    }
+
+    const schema = new Schema(fields);
+    return schema;
   }
 
   async readSnapshotLength(id: number): Promise<Table> {
@@ -156,66 +210,18 @@ export class DTLSession {
     assert(typeof this.#manifest !== "undefined");
     assert(typeof this.#db !== "undefined");
 
-    let offset;
-    let limit;
-    if (typeof options != "undefined") {
-      ({ offset, limit } = options);
-    }
-
     const snapshot = this.#manifest.snapshotById(id);
     const columns = Array.from(snapshot.columns);
 
-    let query = "SELECT\n";
-
-    // Add column bindings.
+    const tableColumns = {};
     for (const column of columns) {
-      query += `    ${column.name}.values as ${column.name},\n`;
+      tableColumns[column.name] = await this.readArrayData(
+        column.array,
+        options
+      );
     }
-
-    // Add source clauses.
-    query += `FROM (\n`;
-    query += `    SELECT\n`;
-    query += `        row_number() OVER () AS rownum,\n`;
-    query += `        values\n`;
-    query += `    FROM parquet_scan(\n`;
-    query += `        '${columns[0].array}.parquet'\n`;
-    query += `    )\n`;
-    query += `) AS ${columns[0].name}\n`;
-
-    // Add join clauses.
-    for (const column of columns.slice(1)) {
-      query += "JOIN (\n";
-      query += `    SELECT\n`;
-      query += `        row_number() OVER () AS rownum,\n`;
-      query += `        values\n`;
-      query += `    FROM parquet_scan(\n`;
-      query += `        '${column.array}.parquet'\n`;
-      query += `    )\n`;
-      query += `) AS ${column.name}\n`;
-      query += `    USING (rownum)\n`;
-    }
-
-    // Add order by clause.
-    //  query += "ORDER BY\n";
-    //query += `    ${columns[0].name}.rowid\n`;
-
-    // Add offset clause.
-    if (typeof offset != "undefined") {
-      query += `OFFSET ${offset}\n`;
-    }
-
-    // Add limit clause.
-    if (typeof limit != "undefined") {
-      query += `LIMIT ${limit}\n`;
-    }
-
-    // Execute the query.
-    const conn = await this.#db.connect();
-    try {
-      return await conn.query(query);
-    } finally {
-      await conn.close();
-    }
+    const table = new Table(tableColumns);
+    return table;
   }
 }
 
