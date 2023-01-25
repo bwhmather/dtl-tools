@@ -84,7 +84,7 @@ export class DTLSession {
         `${this.#arrayUrl.replace(/\/*$/, "")}/${array}.parquet`,
         "" + document.location
       ).href;
-      await this.#db.registerFileURL(`${array}.parquet`, url);
+      await this.#db.registerFileURL(`${array}.parquet`, url, duckdb.DuckDBDataProtocol.HTTP, false);
     }
   }
 
